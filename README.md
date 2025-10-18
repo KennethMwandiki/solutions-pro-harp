@@ -1,70 +1,94 @@
-# Azure Orbital Space SDK
+README.md
+# 🛰️ Pro‑Harp: Geo‑Intelligent Orbital Security Platform
 
-The Azure Orbital Space SDK is a software development kit, runtime framework, and virtualization platform that makes it easy to develop and deploy applications to space.
+Pro‑Harp is a modular orbital security solution built on the [Azure Orbital Space SDK](https://github.com/microsoft/azure-orbital-space-sdk). It enables real-time anomaly detection from space, geospatial threat correlation, and automated enterprise response for data center protection across diverse regions.
 
-As an application developer, the Azure Orbital Space SDK abstracts complex satellite systems and operations into simple components with clear, standardized actions and interfaces. This allows you to focus on what matters - developing the applications you need on orbit.
+---
+## 🚀 Capabilities
 
-As a satellite service provider, the Azure Orbital Space SDK provides a lightweight, secure runtime framework that allows your satellites to be treated as a generic compute platform. Through interface standardization satellites become reusable assets that can be modified on orbit to execute different missions through payload applications. Payload applications can be deployed to any of your satellites with zero downtime and no code modifications required.
+- **On-Orbit AI Inference**: Detects vehicles, drones, excavation equipment, floods, and surveillance patterns using ONNX Runtime.
+- **Geo-Intelligence**: Supports auto-geocoding from satellite telemetry and manual lat/long input for flexible regional coverage.
+- **Containerized Deployment**: Runs lightweight ML models in orbital containers using SDK runtime.
+- **Ground Integration**: Ingests alerts via .NET APIs, correlates with Azure Sentinel, and triggers Logic Apps playbooks.
+- **Forensics & Compliance**: Stores signed telemetry and imagery in immutable Azure Blob Storage with Purview lineage.
 
-```mermaid
-flowchart TB
-    subgraph "Azure Orbital Space SDK"
-        subgraph "Software Development Kit"
-            APIs
-            Client-Libraries(Client Libraries)
-            Documentation
-            Devcontainers
-            Debug-Shims(Debug Shims)
-            Samples
-            Tutorials
-        end
-        subgraph "Runtime Framework"
-            Core-Services(Core Services)
-            Host-Services(Host Services)
-            Platform-Services(Platform Services)
-            Framework-Plugins(Plugins)
-        end
-        subgraph "Virtual Test Harness"
-            Data-Generators(Data Generators)
-            VTH-Plugins(Plugins)
-            Virtual-Test-Harness(Virtual Test Harness)
-        end
-    end
+---
+
+## ⚠️ Limitations
+
+- **Latency**: Real-time detection may vary based on satellite pass frequency and downlink availability.
+- **Coverage**: Detection accuracy depends on sensor resolution and orbital visibility.
+- **Bandwidth Constraints**: Full imagery is not downlinked—only flagged anomalies are transmitted.
+- **Model Scope**: Initial models tuned for perimeter threats; additional training required for new threat classes.
+
+---
+
+## 📦 Directory Structure
+
+```
+solutions/pro-harp/
+├── app/                  # Orbital container (ONNX + Python)
+│   ├── src/
+│   ├── models/
+│   ├── Dockerfile
+│   ├── LICENSE
+│   └── README.md
+├── ground/               # Ground ingestion and SOC integration (.NET)
+│   ├── ingest/
+│   ├── sentinel/
+│   └── logic-apps/
+├── ops/                  # CI/CD, deployment, VTH tests
+│   ├── ci/
+│   └── deployment/
 ```
 
-## Getting Started
+---
 
-First time working with the Azure Orbital Space SDK? Check out our [Getting Started Guide](./docs/getting-started.md).
+## 🔧 Operational Playbooks
 
-## Overview
+### 1. Orbital Deployment
+- Build container image using Dockerfile.
+- Test with Virtual Test Harness (VTH) using synthetic perimeter scenarios.
+- Push to Azure Container Registry (ACR).
+- Deploy to satellite host via SDK runtime.
 
-Want to learn more about what the Azure Orbital Space SDK is and how it works? Start with these resources:
+### 2. Ground Ingestion
+- Receive anomaly payloads via .NET API.
+- Enrich with Azure Maps geocoding (auto/manual).
+- Normalize and ingest into Sentinel custom table.
 
-- [About the Azure Orbital Space SDK](./docs/overview/about-space-sdk.md)
-- [Azure Orbital Space SDK Architecture Overview](./docs/architecture/architecture.md)
-- [Azure Orbital Space SDK System Requirements](./docs/overview/requirements.md)
+### 3. SOC Correlation
+- Use KQL rules to match anomalies with CCTV, IoT, and access logs.
+- Trigger Logic Apps for automated response (lockdown, dispatch, counter-drone).
 
-## Quick Starts and Tutorials
+### 4. Forensics & Audit
+- Store alerts and imagery in Blob Storage with WORM policies.
+- Register lineage in Microsoft Purview for compliance.
 
-Ready to become a space software developer? Get started with our starter projects and guides:
+---
 
-- [Quick Starts and Tutorials](./docs/quick-starts/quick-starts.md)
+## 🔗 Upstream SDK References
 
-## Sample Applications
+- [Azure Orbital Space SDK GitHub](https://github.com/microsoft/azure-orbital-space-sdk)
+- [ONNX Runtime Samples](https://github.com/microsoft/azure-orbital-space-sdk/tree/main/samples/onnx)
+- [Virtual Test Harness Docs](https://github.com/microsoft/azure-orbital-space-sdk/tree/main/docs/vth)
+- [Container Runtime Guide](https://github.com/microsoft/azure-orbital-space-sdk/tree/main/docs/runtime)
 
-- [Sample ONNX Application](./samples/payloadapps/python/shipdetector-onnx/placeholder)
-- [Sample Tensorflow Application](./samples/payloadapps/python/shipdetector-tf/placeholder)
-- [Starter .NET Application](./samples/payloadapps/dotnet/starter-app/placeholder)
-- [Starter Python Application](./samples/payloadapps/python/starter-app/placeholder)
+---
 
-## Contributing
+## 📜 Licensing & Attribution
 
-Find something you'd like to improve? See how on our [Contributing Guide](./CONTRIBUTING.md).
+This project reuses components from the Azure Orbital Space SDK under the [MIT License](https://github.com/microsoft/azure-orbital-space-sdk/blob/main/LICENSE). All reused files include SPDX headers and attribution in source comments. See `LICENSE` and `NOTICE` for details.
 
-## Legal
+---
 
-Looking for our software license and other legal information? View our [Legal Guide](./LEGAL.md).
+## 🛡️ Security & Support
 
-## Additional Resources
+- Vulnerability disclosures: See `SECURITY.md`
+- Contribution guidelines: See `CONTRIBUTING.md`
+- Code of conduct: See `CODE_OF_CONDUCT.md`
 
-Searching for something else? Find it quickly in our [Table of Contents](./docs/table-of-contents.md).
+---
+
+```
+

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 #!/bin/bash
 #
 # Creates a new app or plugin from the starter templates with renames

@@ -1,9 +1,15 @@
-# Microsoft Open Source Code of Conduct
+# Code of Conduct
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+We are committed to fostering a welcoming and respectful community.
 
-Resources:
+- Be respectful and inclusive.
+- Use appropriate language.
+- Report unacceptable behavior.
 
-- [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/)
-- [Microsoft Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/)
-- Contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with questions or concerns
+## Enforcement
+
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to:
+
+📧 security@[yourdomain].com
+
+Maintainers will review and respond as appropriate.

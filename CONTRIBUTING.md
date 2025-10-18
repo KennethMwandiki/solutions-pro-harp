@@ -1,7 +1,10 @@
-# Contributing Guide
+# Contributing to Pro‑Harp
 
-As of Aug '24 this project does not yet support contributions, but does welcome Issues and suggestions. 
+Thank you for your interest! Please note:
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+- Contributions to `solutions/pro-harp/` are welcome if they align with enterprise security and compliance goals.
+- For upstream SDK issues, contribute directly to [Azure Orbital Space SDK](https://github.com/microsoft/azure-orbital-space-sdk).
+- All contributions must include SPDX headers and comply with licensing requirements.
+- Pull requests should target the `feature/pro-harp` branch, not `main`.
+
+We reserve the right to decline contributions that do not meet compliance or operational standards.

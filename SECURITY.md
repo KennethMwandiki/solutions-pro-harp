@@ -1,41 +1,55 @@
-<!-- BEGIN MICROSOFT SECURITY.MD V0.0.9 BLOCK -->
+# 🔐 Vulnerability Disclosure Workflow (Pro‑Harp)
 
-## Security
+```
+[Discovery]
+    |
+    v
+[Reporter Identifies Vulnerability]
+    |
+    v
+[Private Disclosure to security@yourdomain.com]
+    |
+    v
+[Initial Triage by Maintainers]
+    - Validate report
+    - Assign severity (Critical/High/Medium/Low)
+    - Acknowledge receipt within 72h
+    |
+    v
+[Mitigation Planning]
+    - Reproduce issue
+    - Identify affected components
+    - Draft fix or workaround
+    |
+    v
+[Fix Development & Testing]
+    - Patch code in feature/security branch
+    - Run CI/CD + regression tests
+    - Validate with Virtual Test Harness (VTH)
+    |
+    v
+[Coordinated Release]
+    - Merge fix into main
+    - Publish patched container/image
+    - Update CHANGELOG + SECURITY.md
+    |
+    v
+[Disclosure & Communication]
+    - Notify reporter of resolution
+    - Public advisory if severity ≥ High
+    - Update NOTICE/licenses if dependency-related
+    |
+    v
+[Post‑Mortem & Lessons Learned]
+    - Document root cause
+    - Update operational playbooks
+    - Feed improvements into CI/CD + monitoring
+```
 
-Microsoft takes the security of our software products and services seriously, which includes all source code repositories managed through our GitHub organizations, which include [Microsoft](https://github.com/Microsoft), [Azure](https://github.com/Azure), [DotNet](https://github.com/dotnet), [AspNet](https://github.com/aspnet) and [Xamarin](https://github.com/xamarin).
+---
 
-If you believe you have found a security vulnerability in any Microsoft-owned repository that meets [Microsoft's definition of a security vulnerability](https://aka.ms/security.md/definition), please report it to us as described below.
-
-## Reporting Security Issues
-
-**Please do not report security vulnerabilities through public GitHub issues.**
-
-Instead, please report them to the Microsoft Security Response Center (MSRC) at [https://msrc.microsoft.com/create-report](https://aka.ms/security.md/msrc/create-report).
-
-If you prefer to submit without logging in, send email to [secure@microsoft.com](mailto:secure@microsoft.com).  If possible, encrypt your message with our PGP key; please download it from the [Microsoft Security Response Center PGP Key page](https://aka.ms/security.md/msrc/pgp).
-
-You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Additional information can be found at [microsoft.com/msrc](https://www.microsoft.com/msrc). 
-
-Please include the requested information listed below (as much as you can provide) to help us better understand the nature and scope of the possible issue:
-
-  * Type of issue (e.g. buffer overflow, SQL injection, cross-site scripting, etc.)
-  * Full paths of source file(s) related to the manifestation of the issue
-  * The location of the affected source code (tag/branch/commit or direct URL)
-  * Any special configuration required to reproduce the issue
-  * Step-by-step instructions to reproduce the issue
-  * Proof-of-concept or exploit code (if possible)
-  * Impact of the issue, including how an attacker might exploit the issue
-
-This information will help us triage your report more quickly.
-
-If you are reporting for a bug bounty, more complete reports can contribute to a higher bounty award. Please visit our [Microsoft Bug Bounty Program](https://aka.ms/security.md/msrc/bounty) page for more details about our active programs.
-
-## Preferred Languages
-
-We prefer all communications to be in English.
-
-## Policy
-
-Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https://aka.ms/security.md/cvd).
-
-<!-- END MICROSOFT SECURITY.MD BLOCK -->
+# ✅ Key Notes for Pro‑Harp
+- **Confidentiality:** All reports must come via private email, not GitHub issues.  
+- **Timeline:** Acknowledge in 72h, fix within SLA (Critical ≤ 14 days).  
+- **Auditability:** Every fix must include SPDX headers, updated NOTICE, and immutable storage of advisories.  
+- **Integration:** SOC playbooks should trigger incident drills when a vulnerability is confirmed.  
