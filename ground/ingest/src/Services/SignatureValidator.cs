@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Services/SignatureValidator.cs
-using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -19,7 +19,7 @@ public class SignatureValidator
 
     public bool Validate(string jwt)
     {
-        var handler = new JwtSecurityTokenHandler();
+        var handler = new JsonWebTokenHandler();
         var parameters = new TokenValidationParameters
         {
             ValidateIssuer = false,
