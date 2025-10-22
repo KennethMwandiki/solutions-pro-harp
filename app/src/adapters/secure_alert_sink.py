@@ -1,36 +1,34 @@
 # SPDX-License-Identifier: MIT
-import json
-import os
-from typing import Dict, List
-from ..utils.logging import get_logger
-from ..utils.security import sign_payload
-from ..config import MAX_PAYLOAD_KB, SIGNING_KEY, ALERT_TOPIC
-
-log = get_logger("secure_alert_sink")
+# src/secure_alert_sink.py
+import jwt, requests, time
+from typing import List, Dict
 
 class SecureAlertSink:
-    def __init__(self, topic: str = ALERT_TOPIC):
-        self.topic = topic
-        # Replace with SDK host messaging client in production
+    def __init__(self, endpoint: str, secret: str):
+        self.endpoint = endpoint
+        self.secret = secret
 
-    def send(self, alerts: List[Dict]):
-        # Minimal payload: small, signed packet(s)
+    def send(self, detections: List[Dict], meta: Dict):
         payload = {
-            "topic": self.topic,
-            "count": len(alerts),
-            "alerts": alerts,
+            "topic": "proharp/anomalies",
+            "count": len(detections),
+            "alerts": []
         }
-        serialized = json.dumps(payload, separators=(",", ":"))
-        kb = len(serialized.encode("utf-8")) / 1024.0
-        if kb > MAX_PAYLOAD_KB:
-            log.warning("Payload exceeds size limit (%.2f KB > %d KB). Trimming thumbnails...", kb, MAX_PAYLOAD_KB)
-            for a in alerts:
-                a.pop("thumb", None)
-            serialized = json.dumps({"topic": self.topic, "count": len(alerts), "alerts": alerts}, separators=(",", ":"))
-
-        signature = sign_payload(payload, SIGNING_KEY)
-        envelope = {"payload": json.loads(serialized), "signature": signature}
-
-        # Stub: print. Replace with secure downlink publish.
-        log.info("Sending %d alert(s) to topic=%s size=%.2f KB", len(alerts), self.topic, kb)
-        print(json.dumps(envelope))
+        for d in detections:
+            payload["alerts"].append({
+                "timestamp": meta["timestamp"],
+                "anomaly_type": d["class_name"],
+                "confidence": d["confidence"],
+                "bbox": d["bbox"],
+                "geo": {
+                    "latitude": meta["latitude"],
+                    "longitude": meta["longitude"],
+                    "altitude": meta["altitude"],
+                    "orbitId": meta["orbitId"],
+                    "facility_id": meta["facility_id"]
+                }
+            })
+        token = jwt.encode(payload, self.secret, algorithm="HS256")
+        envelope = {"payload": payload, "signature": token}
+        r = requests.post(self.endpoint, json=envelope, timeout=10)
+        return r.status_code

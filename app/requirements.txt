@@ -1,6 +1,4 @@
-# SPDX-License-Identifier: MIT
-onnxruntime>=1.18.0
-numpy>=1.26
-opencv-python-headless>=4.10.0
-pyjwt>=2.9.0
-requests>=2.32.0
+onnxruntime
+opencv-python
+pyjwt
+requests
