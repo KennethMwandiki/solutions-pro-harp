@@ -26,33 +26,34 @@ app.MapPost("/ingest", async (
     if (sizeKb > maxKb) return Results.BadRequest(new { error = "Payload too large" });
 
     // Signature validation
-    if (!sig.Validate(envelope.signature))
+    if (!sig.Validate(envelope.Signature))
         return Results.Unauthorized();
 
     // Basic schema checks
-    if (envelope.payload?.alerts is null || envelope.payload.alerts.Count == 0)
+    if (envelope.Payload?.Alerts is null || envelope.Payload.Alerts.Count == 0)
         return Results.BadRequest(new { error = "No alerts" });
 
     var records = new List<AlertRecord>();
-    foreach (var a in envelope.payload.alerts)
+    foreach (var a in envelope.Payload.Alerts)
     {
-        var (address, admin, country) = await maps.ReverseAsync(a.geo.latitude, a.geo.longitude, ct);
+        var (address, admin, country) = await maps.ReverseAsync(a.Geo.Latitude, a.Geo.Longitude, ct);
 
         var rec = new AlertRecord
         {
-            Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)a.timestamp),
-            Topic = envelope.payload.topic,
-            AnomalyType = a.anomaly_type,
-            Confidence = a.confidence,
-            Lat = a.geo.latitude,
-            Lon = a.geo.longitude,
-            Alt = a.geo.altitude,
-            OrbitId = a.geo.orbitId,
-            FacilityId = a.geo.facility_id,
-            Address = address,
-            AdminRegion = admin,
-            Country = country,
-            BBox = a.bbox is null ? null : string.Join(",", a.bbox)
+            Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)a.Timestamp),
+            Topic = envelope.Payload.Topic,
+            AnomalyType = a.AnomalyType,
+            Confidence = a.Confidence,
+            Lat = a.Geo.Latitude,
+            Lon = a.Geo.Longitude,
+            Alt = a.Geo.Altitude,
+            OrbitId = a.Geo.OrbitId,
+            FacilityId = a.Geo.FacilityId,
+            TelemetrySource = a.Geo.TelemetrySource,
+            ManualLat = a.Geo.ManualOverride?.Latitude,
+            ManualLon = a.Geo.ManualOverride?.Longitude,
+            ManualReason = a.Geo.ManualOverride?.Reason,
+            BBox = a.BBox is null ? null : string.Join(",", a.BBox)
         };
         records.Add(rec);
     }
