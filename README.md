@@ -7,10 +7,24 @@ Pro‑Harp is a modular orbital security solution built on the [Azure Orbital Sp
 ## 🚀 Capabilities
 
 - **On-Orbit AI Inference**: Detects vehicles, drones, excavation equipment, floods, and surveillance patterns using ONNX Runtime.
-- **Geo-Intelligence**: Supports auto-geocoding from satellite telemetry and manual lat/long input for flexible regional coverage.
+- **Geo-Intelligence**: Supports auto-geocoding from satellite telemetry and manual lat/long input for flexible regional coverage. The schema includes provenance fields (`telemetry_source`) and an auditable `manual_override` object to trace the source of all geo-data.
 - **Containerized Deployment**: Runs lightweight ML models in orbital containers using SDK runtime.
 - **Ground Integration**: Ingests alerts via .NET APIs, correlates with Azure Sentinel, and triggers Logic Apps playbooks.
 - **Forensics & Compliance**: Stores signed telemetry and imagery in immutable Azure Blob Storage with Purview lineage.
+
+---
+
+## 🔁 Continuous Integration
+
+This project uses a GitHub Actions workflow (`.github/workflows/ci-integration.yml`) for end-to-end integration testing on every push and pull request to the `Pro-Harp` branch.
+
+The workflow performs the following steps:
+1.  **Builds** the Orbital App (Python) and Ground Ingest (.NET) containers.
+2.  **Deploys** the containers locally in the runner using Docker Compose.
+3.  **Tests** the full loop by posting a signed anomaly from the orbital app to the ingest service.
+4.  **Asserts** that the mock ingestion sink received and logged the record correctly, including tests for both auto-telemetry and manual override payloads.
+
+This ensures that the core functionality remains stable and that the two main services are always compatible.
 
 ---
 
