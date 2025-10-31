@@ -18,10 +18,11 @@ app.MapPost("/ingest", async (
     MapsEnrichment maps,
     SentinelWriter sink,
     IConfiguration cfg,
+    ILogger<Program> logger, // Added ILogger
     CancellationToken ct) =>
 {
     // Size guard
-    var maxKb = int.Parse(cfg["Ingest:MaxPayloadKb"] ?? "64");
+    var maxKb = cfg.GetValue<int>("Ingest:MaxPayloadKb", 64);
     var sizeKb = System.Text.Encoding.UTF8.GetByteCount(System.Text.Json.JsonSerializer.Serialize(envelope)) / 1024.0;
     if (sizeKb > maxKb) return Results.BadRequest(new { error = "Payload too large" });
 
@@ -34,32 +35,40 @@ app.MapPost("/ingest", async (
         return Results.BadRequest(new { error = "No alerts" });
 
     var records = new List<AlertRecord>();
-    foreach (var a in envelope.Payload.Alerts)
+    try
     {
-        var (address, admin, country) = await maps.ReverseAsync(a.Geo.Latitude, a.Geo.Longitude, ct);
-
-        var rec = new AlertRecord
+        foreach (var a in envelope.Payload.Alerts)
         {
-            Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)a.Timestamp),
-            Topic = envelope.Payload.Topic,
-            AnomalyType = a.AnomalyType,
-            Confidence = a.Confidence,
-            Lat = a.Geo.Latitude,
-            Lon = a.Geo.Longitude,
-            Alt = a.Geo.Altitude,
-            OrbitId = a.Geo.OrbitId,
-            FacilityId = a.Geo.FacilityId,
-            TelemetrySource = a.Geo.TelemetrySource,
-            ManualLat = a.Geo.ManualOverride?.Latitude,
-            ManualLon = a.Geo.ManualOverride?.Longitude,
-            ManualReason = a.Geo.ManualOverride?.Reason,
-            BBox = a.BBox is null ? null : string.Join(",", a.BBox)
-        };
-        records.Add(rec);
-    }
+            var (address, admin, country) = await maps.ReverseAsync(a.Geo.Latitude, a.Geo.Longitude, ct);
 
-    await sink.WriteAsync(records, ct);
-    return Results.Ok(new { accepted = records.Count });
+            var rec = new AlertRecord
+            {
+                Timestamp = DateTimeOffset.FromUnixTimeSeconds((long)a.Timestamp),
+                Topic = envelope.Payload.Topic,
+                AnomalyType = a.AnomalyType,
+                Confidence = a.Confidence,
+                Lat = a.Geo.Latitude,
+                Lon = a.Geo.Longitude,
+                Alt = a.Geo.Altitude,
+                OrbitId = a.Geo.OrbitId,
+                FacilityId = a.Geo.FacilityId,
+                TelemetrySource = a.Geo.TelemetrySource,
+                ManualLat = a.Geo.ManualOverride?.Latitude,
+                ManualLon = a.Geo.ManualOverride?.Longitude,
+                ManualReason = a.Geo.ManualOverride?.Reason,
+                BBox = a.BBox is null ? null : string.Join(",", a.BBox)
+            };
+            records.Add(rec);
+        }
+
+        await sink.WriteAsync(records, ct);
+        return Results.Ok(new { accepted = records.Count });
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error processing ingest request");
+        return Results.Problem("An error occurred while processing the request.");
+    }
 });
 
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));

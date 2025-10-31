@@ -14,7 +14,7 @@ public class SignatureValidator
     public SignatureValidator(IConfiguration cfg)
     {
         _secret = cfg["Security:SigningSecret"] ?? throw new InvalidOperationException("Signing secret missing");
-        _skew = TimeSpan.FromSeconds(int.Parse(cfg["Security:AllowedClockSkewSeconds"] ?? "120"));
+        _skew = TimeSpan.FromSeconds(cfg.GetValue<int>("Security:AllowedClockSkewSeconds", 120));
     }
 
     public bool Validate(string jwt)
