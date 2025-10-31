@@ -1,0 +1,97 @@
+name: CI - Build, Compose, Integration Test
+
+on:
+  push:
+    branches: [ Pro-Harp ]
+  pull_request:
+    branches: [ Pro-Harp ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      ORBITAL_IMAGE: ghcr.io/${{ github.repository_owner }}/proharp-orbital:${{ github.sha }}
+      INGEST_IMAGE: ghcr.io/${{ github.repository_owner }}/proharp-ingest:${{ github.sha }}
+      INGEST_PORT: 8080
+      ORBITAL_SECRET: test-secret-rotate-me
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up QEMU (for multi-arch if needed)
+      uses: docker/setup-qemu-action@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Orbital App image (Python ONNX)
+      run: |
+        docker build -f solutions/pro-harp/app/Dockerfile \
+          -t "${ORBITAL_IMAGE}" \
+          --build-arg MODE=integration \
+          solutions/pro-harp/app
+
+    - name: Build Ground Ingest image (.NET)
+      run: |
+        docker build -f solutions/pro-harp/ground/ingest/Dockerfile \
+          -t "${INGEST_IMAGE}" \
+          solutions/pro-harp/ground/ingest
+
+    - name: Create docker-compose for integration
+      run: |
+        cat > ./ci-docker-compose.yml <<'EOF'
+        version: "3.8"
+        services:
+          ingest:
+            image: ${INGEST_IMAGE}
+            environment:
+              - ASPNETCORE_ENVIRONMENT=Development
+              - Ingest__MaxPayloadKb=128
+              - Security__SigningSecret=${ORBITAL_SECRET}
+            ports:
+              - "${INGEST_PORT}:80"
+            healthcheck:
+              test: ["CMD", "curl", "-f", "http://localhost/healthz"]
+              interval: 5s
+              retries: 6
+
+          orbital:
+            image: ${ORBITAL_IMAGE}
+            environment:
+              - INGEST_ENDPOINT=http://ingest:80/ingest
+              - INGEST_SECRET=${ORBITAL_SECRET}
+            depends_on:
+              ingest:
+                condition: service_healthy
+        EOF
+
+    - name: Run compose and wait
+      run: |
+        docker compose -f ./ci-docker-compose.yml up -d
+        # wait for ingest to be healthy
+        for i in $(seq 1 30); do
+          docker compose -f ./ci-docker-compose.yml exec -T ingest curl -fsS http://localhost/healthz && break || sleep 2
+        done
+        docker ps --format '{{.Names}}	{{.Status}}	{{.Image}}'
+
+        - name: Run integration test (post sample payload)
+          run: |
+            python3 solutions/pro-harp/ci/test_integration.py
+    - name: Gather logs for artifacts
+      if: always()
+      run: |
+        echo "=== Ingest logs ==="
+        docker compose -f ./ci-docker-compose.yml logs ingest --no-color | tail -n +1
+        echo "=== Orbital logs ==="
+        docker compose -f ./ci-docker-compose.yml logs orbital --no-color | tail -n +1
+
+    - name: Tear down compose
+      if: always()
+      run: docker compose -f ./ci-docker-compose.yml down --volumes

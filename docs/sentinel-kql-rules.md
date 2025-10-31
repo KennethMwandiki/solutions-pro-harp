@@ -1,12 +1,4 @@
-# Sentinel KQL Rules
-
-This document stores Sentinel KQL rules for future reference.
-
-## Geo-Fence Rules
-
 ### 1. Facility Geo-Fence Breach
-This rule detects when an anomaly with high confidence is detected within a 500-meter radius of a facility.
-
 ```kql
 ProHarpAnomalies_CL
 | where Confidence >= 0.7
@@ -18,8 +10,6 @@ ProHarpAnomalies_CL
 ```
 
 ### 2. Manual Override Audit
-This rule audits manual telemetry overrides, counting them per facility per hour.
-
 ```kql
 ProHarpAnomalies_CL
 | where TelemetrySource == "manual"
@@ -27,8 +17,6 @@ ProHarpAnomalies_CL
 ```
 
 ### 3. Multi-Facility Intrusion
-This rule detects if a "drone" anomaly is detected across multiple facilities within a 10-minute window.
-
 ```kql
 ProHarpAnomalies_CL
 | where AnomalyType == "drone" and Confidence > 0.8

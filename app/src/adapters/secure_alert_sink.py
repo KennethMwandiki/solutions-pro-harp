@@ -25,7 +25,9 @@ class SecureAlertSink:
                     "longitude": meta["longitude"],
                     "altitude": meta["altitude"],
                     "orbitId": meta["orbitId"],
-                    "facility_id": meta["facility_id"]
+                    "facility_id": meta["facility_id"],
+                    "telemetry_source": "auto",
+                    "manual_override": {"enabled": False, "latitude": None, "longitude": None, "reason": None}
                 }
             })
         token = jwt.encode(payload, self.secret, algorithm="HS256")

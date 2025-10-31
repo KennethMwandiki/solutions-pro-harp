@@ -26,9 +26,4 @@ public class AlertRecord
 
     // Optional bounding box
     public string? BBox { get; set; }
-
-    // Enriched data
-    public string? Address { get; set; }
-    public string? AdminRegion { get; set; }
-    public string? Country { get; set; }
 }

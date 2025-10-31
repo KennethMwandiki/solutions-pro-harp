@@ -8,15 +8,37 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<SignatureValidator>();
 builder.Services.AddHttpClient<MapsEnrichment>();
-builder.Services.AddSingleton<SentinelWriter>();
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddSingleton<ISink, MockSink>();
+}
+else
+{
+    builder.Services.AddSingleton<ISink, SentinelWriter>();
+}
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.Logger.LogInformation("Using MockSink for development.");
+    app.MapGet("/debug/logs", (ISink sink) =>
+    {
+        if (sink is MockSink mock)
+        {
+            return Results.Ok(mock.Records);
+        }
+        return Results.NotFound("Not in development mode");
+    });
+}
+
 
 app.MapPost("/ingest", async (
     [FromBody] AlertEnvelope envelope,
     SignatureValidator sig,
     MapsEnrichment maps,
-    SentinelWriter sink,
+    ISink sink,
     IConfiguration cfg,
     ILogger<Program> logger, // Added ILogger
     CancellationToken ct) =>

@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace ProHarp.Ingest.Services;
 
-public class SentinelWriter
+public class SentinelWriter : ISink
 {
     // Replace with actual Event Hub / Log Analytics client
     public Task WriteAsync(IEnumerable<AlertRecord> records, CancellationToken ct)
