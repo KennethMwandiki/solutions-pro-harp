@@ -1,0 +1,20 @@
+{
+    "scenarios": [
+        {
+            "name": "Perimeter Intrusion",
+            "description": "Simulates a person entering a restricted zone.",
+            "durationSeconds": 60,
+            "objects": [
+                { "type": "person", "start": [0, 0], "end": [100, 100], "speed": 1.5 }
+            ]
+        },
+        {
+            "name": "Drone Surveillance",
+            "description": "Simulates a drone hovering over the facility.",
+            "durationSeconds": 30,
+            "objects": [
+                { "type": "drone", "start": [50, 50], "end": [50, 50], "speed": 0 }
+            ]
+        }
+    ]
+}

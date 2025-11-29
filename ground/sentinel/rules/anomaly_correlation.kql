@@ -1,0 +1,19 @@
+// KQL Rule: Correlate Orbital Anomalies with Ground Assets
+// Detects when an anomaly is within 500m of a known facility
+
+let Facilities = datatable(FacilityId:string, Lat:double, Lon:double)
+[
+    "FAC-001", 47.6062, -122.3321, // Seattle
+    "FAC-002", 51.5074, -0.1278,   // London
+    "FAC-003", 35.6895, 139.6917   // Tokyo
+];
+
+ProHarpAnomalies_CL
+| where Confidence > 0.7
+| extend AnomalyGeo = geo_point_to_h3cell(Lat, Lon, 10)
+| join kind=inner (
+    Facilities
+    | extend FacilityGeo = geo_point_to_h3cell(Lat, Lon, 10)
+) on $left.AnomalyGeo == $right.FacilityGeo
+| project Timestamp, AnomalyType, Confidence, Lat, Lon, FacilityId, DistanceMeters = geo_distance_2points(Lat, Lon, Lat1, Lon1)
+| where DistanceMeters < 500

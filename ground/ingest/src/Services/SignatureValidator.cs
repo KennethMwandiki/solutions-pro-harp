@@ -30,9 +30,8 @@ public class SignatureValidator
         };
         try
         {
-            handler.ValidateToken(jwt, parameters, out var token);
-            // Optional: inspect custom claims (ts, hash_hint) and enforce skew
-            return true;
+            var result = handler.ValidateToken(jwt, parameters);
+            return result.IsValid;
         }
         catch
         {

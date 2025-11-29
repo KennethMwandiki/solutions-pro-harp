@@ -7,12 +7,18 @@ namespace ProHarp.Ingest.Services;
 
 public class SentinelWriter : ISink
 {
-    // Replace with actual Event Hub / Log Analytics client
+    private const string LogFile = "sentinel_output.log";
+    private readonly object _lock = new();
+
     public Task WriteAsync(IEnumerable<AlertRecord> records, CancellationToken ct)
     {
-        foreach (var r in records)
+        lock (_lock)
         {
-            Console.WriteLine(JsonSerializer.Serialize(r));
+            foreach (var r in records)
+            {
+                var json = JsonSerializer.Serialize(r);
+                File.AppendAllText(LogFile, json + Environment.NewLine);
+            }
         }
         return Task.CompletedTask;
     }

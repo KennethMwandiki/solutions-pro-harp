@@ -22,6 +22,12 @@ public class MapsEnrichment
 
         var baseUrl = _cfg["AzureMaps:BaseUrl"]!;
         var key = _cfg["AzureMaps:SubscriptionKey"];
+
+        if (string.IsNullOrEmpty(key) || key == "replace-or-use-managed-identity")
+        {
+            return (null, null, null);
+        }
+
         var url = $"{baseUrl}?api-version=1.0&query={lat},{lon}&subscription-key={key}";
 
         var res = await _http.GetFromJsonAsync<AzureMapsReverseResponse>(url, ct);
