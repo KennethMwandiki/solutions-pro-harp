@@ -32,5 +32,6 @@ class SecureAlertSink:
             })
         token = jwt.encode(payload, self.secret, algorithm="HS256")
         envelope = {"payload": payload, "signature": token}
+        print(f"Sending payload: {envelope}")
         r = requests.post(self.endpoint, json=envelope, timeout=10)
         return r.status_code
