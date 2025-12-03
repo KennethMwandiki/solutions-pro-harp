@@ -33,16 +33,16 @@ jobs:
 
     - name: Build Orbital App image (Python ONNX)
       run: |
-        docker build -f solutions/pro-harp/app/Dockerfile \
+        docker build -f app/Dockerfile \
           -t "${ORBITAL_IMAGE}" \
           --build-arg MODE=integration \
-          solutions/pro-harp/app
+          app
 
     - name: Build Ground Ingest image (.NET)
       run: |
-        docker build -f solutions/pro-harp/ground/ingest/Dockerfile \
+        docker build -f ground/ingest/Dockerfile \
           -t "${INGEST_IMAGE}" \
-          solutions/pro-harp/ground/ingest
+          ground/ingest
 
     - name: Create docker-compose for integration
       run: |
@@ -83,7 +83,7 @@ jobs:
 
         - name: Run integration test (post sample payload)
           run: |
-            python3 solutions/pro-harp/ci/test_integration.py
+            python3 ci/test_integration.py
     - name: Gather logs for artifacts
       if: always()
       run: |

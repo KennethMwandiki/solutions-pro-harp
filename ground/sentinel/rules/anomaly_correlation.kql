@@ -17,3 +17,22 @@ ProHarpAnomalies_CL
 ) on $left.AnomalyGeo == $right.FacilityGeo
 | project Timestamp, AnomalyType, Confidence, Lat, Lon, FacilityId, DistanceMeters = geo_distance_2points(Lat, Lon, Lat1, Lon1)
 | where DistanceMeters < 500
+
+// Rule: Persistent Threat (Loitering)
+// Detects same anomaly type in same location (within 50m) > 3 times in 10 mins
+ProHarpAnomalies_CL
+| where Confidence > 0.8
+| summarize Count=count(), StartTime=min(Timestamp), EndTime=max(Timestamp) by AnomalyType, GeoHash=geo_point_to_geohash(Lat, Lon, 8)
+| where Count > 3 and (EndTime - StartTime) < 10m
+
+// Rule: Multi-Modal Threat (Coordinated)
+// Detects Person + Vehicle within 100m in 5 mins window
+let Persons = ProHarpAnomalies_CL | where AnomalyType == "person";
+let Vehicles = ProHarpAnomalies_CL | where AnomalyType == "vehicle";
+Persons
+| join kind=inner (
+    Vehicles
+) on $left.OrbitId == $right.OrbitId // Simplified join, ideally spatial
+| where abs(Timestamp - Timestamp1) < 5m
+| project PersonTime=Timestamp, VehicleTime=Timestamp1, PersonLat=Lat, PersonLon=Lon, VehicleLat=Lat1, VehicleLon=Lon1
+| where geo_distance_2points(PersonLat, PersonLon, VehicleLat, VehicleLon) < 100

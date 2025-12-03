@@ -5,7 +5,18 @@
             "description": "Simulates a person entering a restricted zone.",
             "durationSeconds": 60,
             "objects": [
-                { "type": "person", "start": [0, 0], "end": [100, 100], "speed": 1.5 }
+                {
+                    "type": "person",
+                    "start": [
+                        0,
+                        0
+                    ],
+                    "end": [
+                        100,
+                        100
+                    ],
+                    "speed": 1.5
+                }
             ]
         },
         {
@@ -13,7 +24,69 @@
             "description": "Simulates a drone hovering over the facility.",
             "durationSeconds": 30,
             "objects": [
-                { "type": "drone", "start": [50, 50], "end": [50, 50], "speed": 0 }
+                {
+                    "type": "drone",
+                    "start": [
+                        50,
+                        50
+                    ],
+                    "end": [
+                        50,
+                        50
+                    ],
+                    "speed": 0
+                }
+            ]
+        },
+        {
+            "name": "Unauthorized Excavation",
+            "description": "Simulates heavy machinery operating near pipeline.",
+            "durationSeconds": 120,
+            "objects": [
+                {
+                    "type": "excavator",
+                    "start": [
+                        200,
+                        200
+                    ],
+                    "end": [
+                        205,
+                        205
+                    ],
+                    "speed": 0.5
+                }
+            ]
+        },
+        {
+            "name": "Coordinated Approach",
+            "description": "Simulates a vehicle dropping off a person.",
+            "durationSeconds": 90,
+            "objects": [
+                {
+                    "type": "vehicle",
+                    "start": [
+                        0,
+                        0
+                    ],
+                    "end": [
+                        100,
+                        100
+                    ],
+                    "speed": 10
+                },
+                {
+                    "type": "person",
+                    "start": [
+                        100,
+                        100
+                    ],
+                    "end": [
+                        150,
+                        150
+                    ],
+                    "speed": 2,
+                    "delaySeconds": 10
+                }
             ]
         }
     ]
