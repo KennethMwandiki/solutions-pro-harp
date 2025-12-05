@@ -84,6 +84,17 @@ app.MapPost("/ingest", async (
         }
 
         await sink.WriteAsync(records, ct);
+
+        // Phase 7: Mock Logic App Trigger
+        foreach (var rec in records)
+        {
+            if (rec.Confidence > 0.9)
+            {
+                // In production, this would be an HTTP POST to the Logic App URL
+                logger.LogInformation($"[LogicApp Trigger] High confidence anomaly detected! Triggering Lockdown Playbook for AlertId: {Guid.NewGuid()}"); 
+            }
+        }
+
         return Results.Ok(new { accepted = records.Count });
     }
     catch (Exception ex)
@@ -93,6 +104,21 @@ app.MapPost("/ingest", async (
     }
 });
 
+app.MapPost("/feedback", async ([FromBody] FeedbackRecord feedback) =>
+{
+    var logPath = "feedback_log.json";
+    var entry = System.Text.Json.JsonSerializer.Serialize(feedback) + Environment.NewLine;
+    await File.AppendAllTextAsync(logPath, entry);
+    return Results.Ok(new { status = "recorded" });
+});
+
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
+
+public class FeedbackRecord
+{
+    public required string AlertId { get; set; }
+    public bool IsTruePositive { get; set; }
+    public required string CorrectLabel { get; set; }
+}

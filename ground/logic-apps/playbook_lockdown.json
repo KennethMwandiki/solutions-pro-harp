@@ -1,0 +1,91 @@
+{
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "IncidentEmail": {
+            "defaultValue": "security-ops@proharp.com",
+            "type": "String"
+        }
+    },
+    "triggers": {
+        "manual": {
+            "type": "Request",
+            "kind": "Http",
+            "inputs": {
+                "schema": {
+                    "properties": {
+                        "AlertId": {
+                            "type": "string"
+                        },
+                        "AnomalyType": {
+                            "type": "string"
+                        },
+                        "Confidence": {
+                            "type": "number"
+                        },
+                        "FacilityId": {
+                            "type": "string"
+                        },
+                        "Lat": {
+                            "type": "number"
+                        },
+                        "Lon": {
+                            "type": "number"
+                        }
+                    },
+                    "type": "object"
+                }
+            }
+        }
+    },
+    "actions": {
+        "Condition_Confidence": {
+            "type": "If",
+            "expression": {
+                "and": [
+                    {
+                        "greater": [
+                            "@triggerBody()?['Confidence']",
+                            0.9
+                        ]
+                    }
+                ]
+            },
+            "actions": {
+                "Send_Approval_Email": {
+                    "type": "ApiConnection",
+                    "inputs": {
+                        "body": {
+                            "Body": "High confidence anomaly detected at facility @{triggerBody()?['FacilityId']}. <br> Type: @{triggerBody()?['AnomalyType']} <br> Confidence: @{triggerBody()?['Confidence']}",
+                            "Subject": "URGENT: Automated Lockdown Request - @{triggerBody()?['AlertId']}",
+                            "To": "@parameters('IncidentEmail')",
+                            "UserOptions": {
+                                "IsHtml": true
+                            }
+                        },
+                        "host": {
+                            "connection": {
+                                "name": "@parameters('$connections')['office365']['connectionId']"
+                            }
+                        },
+                        "method": "post",
+                        "path": "/v2/Mail"
+                    }
+                },
+                "Trigger_IoT_Lockdown": {
+                    "type": "Http",
+                    "inputs": {
+                        "method": "POST",
+                        "uri": "https://api.facility-iot.local/lockdown",
+                        "body": {
+                            "facility": "@triggerBody()?['FacilityId']",
+                            "reason": "Orbital Anomaly Detected",
+                            "severity": "critical"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outputs": {}
+}

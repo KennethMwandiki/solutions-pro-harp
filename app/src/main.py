@@ -14,10 +14,13 @@ def run():
     )
 
     for frame in stream.stream():
+        print("Processing frame...")
         detections = detector.detect(frame.image)
+        print(f"Detections: {len(detections)}")
         if detections:
             status = sink.send(detections, frame.meta)
             print(f"Sent {len(detections)} detections, status={status}")
+            break # Exit after one successful send for debugging
 
 if __name__ == "__main__":
     run()

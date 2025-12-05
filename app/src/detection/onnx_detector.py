@@ -25,7 +25,7 @@ class OnnxDetector:
             
         return img
 
-    def postprocess(self, preds: np.ndarray, conf_thresh=0.5) -> List[Dict]:
+    def postprocess(self, preds: np.ndarray, conf_thresh=0.25) -> List[Dict]:
         results = []
         # preds shape is likely (1, 25200, 85) or (25200, 85)
         if preds.ndim == 3:
