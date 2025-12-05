@@ -14,6 +14,25 @@ Pro‑Harp is a modular orbital security solution built on the [Azure Orbital Sp
 
 ---
 
+## 🏗️ Architecture
+
+```mermaid
+graph TD
+    subgraph Space ["🛰️ Orbital Segment"]
+        Camera[Camera / Mock Stream] -->|Frames| Detector[ONNX Detector]
+        Detector -->|Detections| Sink[Secure Alert Sink]
+        Sink -->|Signed JWT| GroundAPI
+    end
+
+    subgraph Ground ["🌍 Ground Segment"]
+        GroundAPI[Ground Ingest API] -->|Validate| Auth[Signature Validator]
+        GroundAPI -->|Enrich| Maps[Azure Maps]
+        GroundAPI -->|Log| Sentinel[Sentinel / Log File]
+    end
+```
+
+---
+
 ## 🔁 Continuous Integration
 
 This project uses a GitHub Actions workflow (`.github/workflows/ci-integration.yml`) for end-to-end integration testing on every push and pull request to the `Pro-Harp` branch.
@@ -66,10 +85,26 @@ solutions/pro-harp/
 - Push to Azure Container Registry (ACR).
 - Deploy to satellite host via SDK runtime.
 
+#### Local Testing
+You can run the Orbital App locally without hardware:
+1.  **Mock Camera**: The app supports using a static image file instead of a webcam.
+    ```bash
+    # Download a test image
+    python app/download_test_image.py
+    # Run the app (uses test_image.jpg by default if present)
+    python app/src/main.py
+    ```
+2.  **Local Ground API**: The app is configured to send alerts to `http://localhost:5000/ingest` using a local development secret.
+
 ### 2. Ground Ingestion
 - Receive anomaly payloads via .NET API.
 - Enrich with Azure Maps geocoding (auto/manual).
 - Normalize and ingest into Sentinel custom table.
+
+#### KQL Correlation Rules
+New advanced rules have been added to `ground/sentinel/rules/anomaly_correlation.kql`:
+- **Persistent Threat**: Detects loitering (same anomaly type in same location > 3 times in 10 mins).
+- **Multi-Modal Threat**: Detects coordinated activity (Person + Vehicle within 100m).
 
 ### 3. SOC Correlation
 - Use KQL rules to match anomalies with CCTV, IoT, and access logs.
@@ -86,6 +121,7 @@ solutions/pro-harp/
 - [Azure Orbital Space SDK GitHub](https://github.com/microsoft/azure-orbital-space-sdk)
 - [ONNX Runtime Samples](https://github.com/microsoft/azure-orbital-space-sdk/tree/main/samples/onnx)
 - [Virtual Test Harness Docs](https://github.com/microsoft/azure-orbital-space-sdk/tree/main/docs/vth)
+    - *New Scenarios*: "Unauthorized Excavation" and "Coordinated Approach" added to `ops/vth/config.json`.
 - [Container Runtime Guide](https://github.com/microsoft/azure-orbital-space-sdk/tree/main/docs/runtime)
 
 ---

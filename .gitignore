@@ -330,6 +330,10 @@ paket-files/
 __pycache__/
 *.pyc
 
+# Test assets
+test_image.jpg
+*.log
+
 # Cake - Uncomment if you are using it
 # tools/**
 # !tools/packages.config
