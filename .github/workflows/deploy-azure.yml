@@ -1,0 +1,47 @@
+name: Deploy to Azure
+
+on:
+  push:
+    branches: [ "main", "Pro-Harp" ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  RESOURCE_GROUP: "rg-proharp-prod"
+  LOCATION: "westus2"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ env.AZURE_CLIENT_ID }}
+        tenant-id: ${{ env.AZURE_TENANT_ID }}
+        subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Build and Push to ACR
+      run: |
+        # In a real scenario, we'd query the ACR name from Azure or use a known secret
+        # For this template, we assume ACR is created by step 1
+        echo "Building and Pushing images..."
+        # az acr build --registry <acr-name> --image ground-ingest:latest ./ground/ingest
+        # az acr build --registry <acr-name> --image orbital-app:latest ./app
+
+    - name: Deploy Infrastructure (Bicep)
+      uses: azure/arm-deploy@v1
+      with:
+        subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+        resourceGroupName: ${{ env.RESOURCE_GROUP }}
+        template: ./ops/deployment/azure/ground-infra.bicep
+        parameters: location=${{ env.LOCATION }}
+        failOnStdErr: false
