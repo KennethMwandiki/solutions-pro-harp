@@ -1,0 +1,126 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -74.006,
+          40.7128
+        ]
+      },
+      "properties": {
+        "entity_type": "object",
+        "id": "obj-power-001",
+        "name": "Central Power Station",
+        "criticality": "CRITICAL",
+        "criticality_value": 4,
+        "vulnerability_score": 0.9,
+        "asset_value": 5000000,
+        "dependencies": [],
+        "type": "power_generation",
+        "capacity_mw": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -74.01,
+          40.72
+        ]
+      },
+      "properties": {
+        "entity_type": "object",
+        "id": "obj-water-001",
+        "name": "Main Water Treatment Plant",
+        "criticality": "HIGH",
+        "criticality_value": 3,
+        "vulnerability_score": 0.7,
+        "asset_value": 3000000,
+        "dependencies": [
+          "obj-power-001"
+        ],
+        "type": "water_treatment",
+        "capacity_mgd": 100
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -74.015,
+          40.708
+        ]
+      },
+      "properties": {
+        "entity_type": "object",
+        "id": "obj-comm-001",
+        "name": "Emergency Communications Tower",
+        "criticality": "CRITICAL",
+        "criticality_value": 4,
+        "vulnerability_score": 0.6,
+        "asset_value": 1000000,
+        "dependencies": [
+          "obj-power-001"
+        ],
+        "type": "communications",
+        "coverage_radius_km": 50
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -74.005,
+          40.725
+        ]
+      },
+      "properties": {
+        "entity_type": "object",
+        "id": "obj-hospital-001",
+        "name": "Metro General Hospital",
+        "criticality": "CRITICAL",
+        "criticality_value": 4,
+        "vulnerability_score": 0.5,
+        "asset_value": 10000000,
+        "dependencies": [
+          "obj-power-001",
+          "obj-water-001"
+        ],
+        "type": "hospital",
+        "beds": 300,
+        "trauma_center": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -74.008,
+          40.71
+        ]
+      },
+      "properties": {
+        "entity_type": "object",
+        "id": "obj-data-001",
+        "name": "City Data Center",
+        "criticality": "HIGH",
+        "criticality_value": 3,
+        "vulnerability_score": 0.4,
+        "asset_value": 2000000,
+        "dependencies": [
+          "obj-power-001",
+          "obj-comm-001"
+        ],
+        "type": "data_center",
+        "uptime_sla": 99.99
+      }
+    }
+  ]
+}

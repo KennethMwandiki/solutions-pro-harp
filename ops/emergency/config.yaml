@@ -1,0 +1,190 @@
+# Emergency Response System Configuration
+
+# Threat type thresholds for escalation
+thresholds:
+  fire:
+    low: 2.0      # Magnitude threshold for low escalation
+    medium: 5.0   # Magnitude threshold for medium escalation
+    high: 8.0     # Magnitude threshold for high escalation
+  
+  medical:
+    low: 1.0
+    medium: 3.0
+    high: 7.0
+  
+  security:
+    low: 2.0
+    medium: 6.0
+    high: 9.0
+  
+  radiation:
+    low: 1.0      # Sv (Sievert)
+    medium: 5.0
+    high: 10.0
+  
+  seismic:
+    low: 4.0      # Richter magnitude
+    medium: 6.0
+    high: 7.5
+  
+  chemical:
+    low: 2.0
+    medium: 5.0
+    high: 8.0
+  
+  weather:
+    low: 3.0
+    medium: 6.0
+    high: 9.0
+
+# Emergency hotline mappings by threat type and escalation level
+hotlines:
+  fire:
+    local: "911"
+    regional: "+1-800-555-1010"
+    supervisor: "+1-800-555-9001"
+  
+  medical:
+    local: "911"
+    regional: "+1-800-555-2020"
+    trauma_center: "+1-800-555-2021"
+    supervisor: "+1-800-555-9002"
+  
+  security:
+    local: "311"
+    regional: "+1-800-555-3030"
+    supervisor: "+1-800-555-9003"
+  
+  radiation:
+    local: "911"
+    regional: "+1-800-555-4040"
+    nuclear_agency: "+1-800-555-4041"
+    supervisor: "+1-800-555-9004"
+  
+  seismic:
+    local: "911"
+    regional: "+1-800-555-5050"
+    usgs: "+1-800-555-5051"
+    supervisor: "+1-800-555-9005"
+  
+  chemical:
+    local: "911"
+    regional: "+1-800-555-6060"
+    hazmat: "+1-800-555-6061"
+    supervisor: "+1-800-555-9006"
+  
+  weather:
+    local: "911"
+    regional: "+1-800-555-7070"
+    nws: "+1-800-555-7071"
+    supervisor: "+1-800-555-9007"
+
+# Escalation matrix - defines which contacts to notify per escalation level
+escalation_matrix:
+  fire:
+    low:
+      - local
+    medium:
+      - local
+      - regional
+    high:
+      - local
+      - regional
+      - supervisor
+  
+  medical:
+    low:
+      - local
+    medium:
+      - local
+      - regional
+    high:
+      - local
+      - regional
+      - trauma_center
+      - supervisor
+  
+  security:
+    low:
+      - local
+    medium:
+      - local
+      - regional
+    high:
+      - local
+      - regional
+      - supervisor
+  
+  radiation:
+    low:
+      - local
+    medium:
+      - local
+      - regional
+      - nuclear_agency
+    high:
+      - local
+      - regional
+      - nuclear_agency
+      - supervisor
+  
+  seismic:
+    low:
+      - local
+    medium:
+      - local
+      - regional
+      - usgs
+    high:
+      - local
+      - regional
+      - usgs
+      - supervisor
+  
+  chemical:
+    low:
+      - local
+    medium:
+      - local
+      - regional
+      - hazmat
+    high:
+      - local
+      - regional
+      - hazmat
+      - supervisor
+  
+  weather:
+    low:
+      - local
+    medium:
+      - local
+      - regional
+      - nws
+    high:
+      - local
+      - regional
+      - nws
+      - supervisor
+
+# Risk scoring weights
+risk_scoring:
+  magnitude_weight: 0.4
+  criticality_weight: 0.3
+  vulnerability_weight: 0.2
+  proximity_weight: 0.1
+
+# Notification settings
+notifications:
+  retry_attempts: 3
+  retry_delay_seconds: 10
+  circuit_breaker:
+    enabled: true
+    debounce_window_seconds: 300  # 5 minutes
+    max_events_per_window: 5
+
+# Logging settings
+logging:
+  incident_log_path: "logs/incidents.jsonl"
+  audit_log_path: "logs/audit.log"
+  log_level: "INFO"
