@@ -7,11 +7,11 @@ This module creates realistic test data for objects, personnel, and areas.
 import json
 from pathlib import Path
 
-from data_models import (
+from ops.emergency.data_models import (
     TrackedObject, Personnel, AreaOfInterest, CriticalityLevel,
     GeoLocation, EntityRepository
 )
-from geo_utils import PerimeterGenerator
+from ops.emergency.geo_utils import PerimeterGenerator
 
 
 def generate_sample_data() -> EntityRepository:
@@ -33,6 +33,7 @@ def generate_sample_data() -> EntityRepository:
         vulnerability_score=0.9,
         asset_value=5000000,
         dependencies=[],
+        tenant_id="tenant-city-one",
         metadata={"type": "power_generation", "capacity_mw": 500}
     ))
     
@@ -44,6 +45,7 @@ def generate_sample_data() -> EntityRepository:
         vulnerability_score=0.7,
         asset_value=3000000,
         dependencies=["obj-power-001"],
+        tenant_id="tenant-city-one",
         metadata={"type": "water_treatment", "capacity_mgd": 100}
     ))
     
@@ -55,6 +57,7 @@ def generate_sample_data() -> EntityRepository:
         vulnerability_score=0.6,
         asset_value=1000000,
         dependencies=["obj-power-001"],
+        tenant_id="tenant-city-one",
         metadata={"type": "communications", "coverage_radius_km": 50}
     ))
     
@@ -66,6 +69,7 @@ def generate_sample_data() -> EntityRepository:
         vulnerability_score=0.5,
         asset_value=10000000,
         dependencies=["obj-power-001", "obj-water-001"],
+        tenant_id="tenant-city-one",
         metadata={"type": "hospital", "beds": 300, "trauma_center": True}
     ))
     
@@ -77,6 +81,7 @@ def generate_sample_data() -> EntityRepository:
         vulnerability_score=0.4,
         asset_value=2000000,
         dependencies=["obj-power-001", "obj-comm-001"],
+        tenant_id="tenant-b",
         metadata={"type": "data_center", "uptime_sla": 99.99}
     ))
     
@@ -92,6 +97,7 @@ def generate_sample_data() -> EntityRepository:
         safety_clearances=["fire", "hazmat", "chemical"],
         contact_phone="+1-555-0101",
         contact_email="sjohnson@firecity.gov",
+        tenant_id="tenant-city-one",
         metadata={"station": "Station 1", "years_service": 15}
     ))
     
@@ -105,6 +111,7 @@ def generate_sample_data() -> EntityRepository:
         safety_clearances=["medical", "radiation", "chemical"],
         contact_phone="+1-555-0102",
         contact_email="mchen@metrohealth.org",
+        tenant_id="tenant-city-one",
         metadata={"hospital": "Metro General", "specialty": "trauma"}
     ))
     
@@ -118,6 +125,7 @@ def generate_sample_data() -> EntityRepository:
         safety_clearances=["security"],
         contact_phone="+1-555-0103",
         contact_email="rmartinez@citypd.gov",
+        tenant_id="tenant-city-one",
         metadata={"precinct": "Downtown", "swat_certified": True}
     ))
     
@@ -131,6 +139,7 @@ def generate_sample_data() -> EntityRepository:
         safety_clearances=["radiation", "chemical"],
         contact_phone="+1-555-0104",
         contact_email="erodriguez@cityworks.gov",
+        tenant_id="tenant-city-one",
         metadata={"department": "Public Works", "specialization": "power_systems"}
     ))
     
@@ -144,6 +153,7 @@ def generate_sample_data() -> EntityRepository:
         safety_clearances=["fire", "medical"],
         contact_phone="+1-555-0105",
         contact_email="jwilson@firecity.gov",
+        tenant_id="tenant-b",
         metadata={"station": "Station 2"}
     ))
     
@@ -159,6 +169,7 @@ def generate_sample_data() -> EntityRepository:
         historical_incident_count=45,
         strategic_importance=CriticalityLevel.CRITICAL,
         available_resources=["hospital", "fire_station", "police_precinct", "shelter"],
+        tenant_id="tenant-city-one",
         metadata={"zoning": "commercial", "evacuation_routes": 6}
     ))
     
@@ -172,6 +183,7 @@ def generate_sample_data() -> EntityRepository:
         historical_incident_count=12,
         strategic_importance=CriticalityLevel.MEDIUM,
         available_resources=["fire_station", "shelter"],
+        tenant_id="tenant-city-one",
         metadata={"zoning": "residential", "schools": 3}
     ))
     
@@ -191,6 +203,7 @@ def generate_sample_data() -> EntityRepository:
         historical_incident_count=28,
         strategic_importance=CriticalityLevel.HIGH,
         available_resources=["hazmat_team", "fire_station"],
+        tenant_id="tenant-b",
         metadata={"zoning": "industrial", "hazardous_ materials": True}
     ))
     

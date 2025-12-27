@@ -73,6 +73,7 @@ class TrackedObject:
     vulnerability_score: float  # 0.0 to 1.0
     asset_value: float  # Arbitrary units
     dependencies: List[str] = field(default_factory=list)  # IDs of dependent objects
+    tenant_id: str = "default_tenant"
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def to_geojson(self) -> Dict[str, Any]:
@@ -91,7 +92,10 @@ class TrackedObject:
                 "criticality_value": self.criticality.value,
                 "vulnerability_score": self.vulnerability_score,
                 "asset_value": self.asset_value,
+                "vulnerability_score": self.vulnerability_score,
+                "asset_value": self.asset_value,
                 "dependencies": self.dependencies,
+                "tenant_id": self.tenant_id,
                 **self.metadata
             }
         }
@@ -109,6 +113,7 @@ class Personnel:
     safety_clearances: List[str] = field(default_factory=list)  # e.g., ["radiation", "chemical"]
     contact_phone: Optional[str] = None
     contact_email: Optional[str] = None
+    tenant_id: str = "default_tenant"
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def to_geojson(self) -> Dict[str, Any]:
@@ -130,6 +135,7 @@ class Personnel:
                 "safety_clearances": self.safety_clearances,
                 "contact_phone": self.contact_phone,
                 "contact_email": self.contact_email,
+                "tenant_id": self.tenant_id,
                 **self.metadata
             }
         }
@@ -145,6 +151,7 @@ class AreaOfInterest:
     historical_incident_count: int
     strategic_importance: CriticalityLevel
     available_resources: List[str] = field(default_factory=list)  # e.g., ["hospital", "shelter"]
+    tenant_id: str = "default_tenant"
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def to_geojson(self) -> Dict[str, Any]:
@@ -163,7 +170,9 @@ class AreaOfInterest:
                 "historical_incident_count": self.historical_incident_count,
                 "strategic_importance": self.strategic_importance.name,
                 "strategic_importance_value": self.strategic_importance.value,
+                "strategic_importance_value": self.strategic_importance.value,
                 "available_resources": self.available_resources,
+                "tenant_id": self.tenant_id,
                 **self.metadata
             }
         }
@@ -265,6 +274,27 @@ class EntityRepository:
             "features": features
         }
     
+    def get_tenant_geojson(self, tenant_id: str) -> Dict[str, Any]:
+        """Export entities for a specific tenant as GeoJSON."""
+        features = []
+        
+        for obj in self.objects.values():
+            if obj.tenant_id == tenant_id:
+                features.append(obj.to_geojson())
+        
+        for person in self.personnel.values():
+            if person.tenant_id == tenant_id:
+                features.append(person.to_geojson())
+        
+        for area in self.areas.values():
+            if area.tenant_id == tenant_id:
+                features.append(area.to_geojson())
+        
+        return {
+            "type": "FeatureCollection",
+            "features": features
+        }
+    
     def save_to_file(self, filepath: str) -> None:
         """Save repository to a GeoJSON file."""
         with open(filepath, 'w') as f:
@@ -289,7 +319,8 @@ class EntityRepository:
                     criticality=CriticalityLevel[props["criticality"]],
                     vulnerability_score=props["vulnerability_score"],
                     asset_value=props["asset_value"],
-                    dependencies=props.get("dependencies", [])
+                    dependencies=props.get("dependencies", []),
+                    tenant_id=props.get("tenant_id", "default_tenant")
                 )
                 self.add_object(obj)
             
@@ -305,7 +336,8 @@ class EntityRepository:
                     on_duty=props["on_duty"],
                     safety_clearances=props.get("safety_clearances", []),
                     contact_phone=props.get("contact_phone"),
-                    contact_email=props.get("contact_email")
+                    contact_email=props.get("contact_email"),
+                    tenant_id=props.get("tenant_id", "default_tenant")
                 )
                 self.add_personnel(person)
             
@@ -317,6 +349,7 @@ class EntityRepository:
                     population_density=props["population_density"],
                     historical_incident_count=props["historical_incident_count"],
                     strategic_importance=CriticalityLevel[props["strategic_importance"]],
-                    available_resources=props.get("available_resources", [])
+                    available_resources=props.get("available_resources", []),
+                    tenant_id=props.get("tenant_id", "default_tenant")
                 )
                 self.add_area(area)
