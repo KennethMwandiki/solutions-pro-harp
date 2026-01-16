@@ -10,11 +10,11 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from collections import defaultdict
 
-from data_models import (
+from ops.emergency.data_models import (
     ThreatEvent, ThreatType, EscalationLevel, CriticalityLevel,
     TrackedObject, Personnel, AreaOfInterest, GeoLocation
 )
-from geo_utils import GeoUtils, Coordinate
+from ops.emergency.geo_utils import GeoUtils, Coordinate
 
 
 class ConfigManager:

@@ -19,6 +19,13 @@ DATA_DIR = project_root / "ops/emergency/data"
 OBJECTS_FILE = DATA_DIR / "objects.geojson"
 PERSONNEL_FILE = DATA_DIR / "personnel.geojson"
 AREAS_FILE = DATA_DIR / "areas.geojson"
+TENANTS = ["tenant-city-one", "tenant-b", "default_tenant"]
+
+# --- Context ---
+with st.sidebar:
+    st.header("🏢 Context")
+    selected_tenant = st.selectbox("Tenant ID", options=TENANTS, index=0)
+    st.info(f"Managing entities for: **{selected_tenant}**")
 
 def load_geojson(filepath):
     if not filepath.exists():
@@ -30,10 +37,14 @@ def save_geojson(filepath, data):
     with open(filepath, "w") as f:
         json.dump(data, f, indent=2)
 
-def features_to_df(features, props_to_cols):
+def features_to_df(features, props_to_cols, current_tenant):
     rows = []
     for f in features:
         props = f.get("properties", {})
+        # Filter by tenant
+        if props.get("tenant_id", "default_tenant") != current_tenant:
+            continue
+            
         geom = f.get("geometry", {})
         coords = geom.get("coordinates", [])
         
@@ -63,7 +74,8 @@ with tab_obj:
     if obj_data["features"]:
         df_obj = features_to_df(
             obj_data["features"], 
-            ["name", "criticality", "vulnerability_score", "asset_value"]
+            ["name", "criticality", "vulnerability_score", "asset_value"],
+            selected_tenant
         )
         st.dataframe(df_obj, use_container_width=True)
     else:
@@ -94,7 +106,8 @@ with tab_obj:
                         "id": new_id,
                         "name": new_name,
                         "criticality": new_crit,
-                        "vulnerability_score": new_vuln
+                        "vulnerability_score": new_vuln,
+                        "tenant_id": selected_tenant
                     }
                 }
                 obj_data["features"].append(new_feature)
@@ -110,7 +123,8 @@ with tab_pers:
     if pers_data["features"]:
         df_pers = features_to_df(
             pers_data["features"],
-            ["name", "role", "criticality", "on_duty", "contact_phone"]
+            ["name", "role", "criticality", "on_duty", "contact_phone"],
+            selected_tenant
         )
         st.dataframe(df_pers, use_container_width=True)
     
@@ -141,7 +155,8 @@ with tab_pers:
                         "role": p_role,
                         "criticality": p_crit,
                         "on_duty": p_on_duty,
-                        "contact_phone": p_phone
+                        "contact_phone": p_phone,
+                        "tenant_id": selected_tenant
                     }
                 }
                 pers_data["features"].append(new_feature)
@@ -158,6 +173,7 @@ with tab_area:
     if area_data["features"]:
         df_area = features_to_df(
             area_data["features"],
-            ["name", "strategic_importance", "population_density"]
+            ["name", "strategic_importance", "population_density"],
+            selected_tenant
         )
         st.dataframe(df_area, use_container_width=True)

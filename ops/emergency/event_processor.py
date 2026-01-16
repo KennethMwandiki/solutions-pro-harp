@@ -12,12 +12,12 @@ from datetime import datetime
 from pathlib import Path
 import uuid
 
-from data_models import (
+from ops.emergency.data_models import (
     ThreatEvent, ThreatType, IncidentRecord, EscalationLevel,
     GeoLocation, EntityRepository
 )
-from rule_engine import RuleEngine
-from notifications import NotificationDispatcher
+from ops.emergency.rule_engine import RuleEngine
+from ops.emergency.notifications import NotificationDispatcher
 
 
 class IncidentLogger:
@@ -218,8 +218,8 @@ class EventProcessor:
 
 def example_usage():
     """Example usage of the event processor."""
-    from data_models import TrackedObject, Personnel, AreaOfInterest, CriticalityLevel
-    from geo_utils import PerimeterGenerator
+    from ops.emergency.data_models import TrackedObject, Personnel, AreaOfInterest, CriticalityLevel
+    from ops.emergency.geo_utils import PerimeterGenerator
     
     # Create example entities
     repo = EntityRepository()
