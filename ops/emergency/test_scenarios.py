@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime
 from typing import List
 
-from data_models import ThreatEvent, ThreatType, GeoLocation
+from ops.emergency.data_models import ThreatEvent, ThreatType, GeoLocation
 
 
 def generate_test_scenarios() -> List[ThreatEvent]:
@@ -113,9 +113,10 @@ def generate_test_scenarios() -> List[ThreatEvent]:
 
 def run_scenario_tests():
     """Run all test scenarios through the event processor."""
-    from sample_data import generate_sample_data
-    from event_processor import EventProcessor
-    from geo_utils import PerimeterGenerator
+    from ops.emergency.sample_data import generate_sample_data
+    from ops.emergency.event_processor import EventProcessor
+    from ops.emergency.geo_utils import PerimeterGenerator
+    from ops.emergency.data_models import GeoLocation, ThreatEvent # Ensure shared definitions
     
     print("=" * 70)
     print("🧪 RUNNING EMERGENCY RESPONSE SYSTEM TEST SCENARIOS")

@@ -4,7 +4,6 @@ param location string = resourceGroup().location
 @description('Prefix for resource names.')
 param baseName string = 'proharp-${uniqueString(resourceGroup().id)}'
 
-// 1. Log Analytics Workspace (Sentinel)
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   name: '${baseName}-logs'
   location: location
@@ -15,7 +14,6 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   }
 }
 
-// 2. Azure Container Registry
 resource acr 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
   name: replace('${baseName}acr', '-', '')
   location: location
@@ -27,7 +25,6 @@ resource acr 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
   }
 }
 
-// 3. Azure Maps Account
 resource maps 'Microsoft.Maps/accounts@2021-02-01' = {
   name: '${baseName}-maps'
   location: location
@@ -37,7 +34,6 @@ resource maps 'Microsoft.Maps/accounts@2021-02-01' = {
   kind: 'Gen2'
 }
 
-// 4. Key Vault
 resource kv 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: '${baseName}-kv'
   location: location
@@ -51,7 +47,6 @@ resource kv 'Microsoft.KeyVault/vaults@2021-10-01' = {
   }
 }
 
-// 5. Container Apps Environment
 resource caEnv 'Microsoft.App/managedEnvironments@2022-03-01' = {
   name: '${baseName}-env'
   location: location
@@ -65,55 +60,3 @@ resource caEnv 'Microsoft.App/managedEnvironments@2022-03-01' = {
     }
   }
 }
-
-// 6. Pro-Harp Dashboard Container App
-resource dashboardApp 'Microsoft.App/containerApps@2022-03-01' = {
-  name: 'proharp-dashboard'
-  location: location
-  properties: {
-    managedEnvironmentId: caEnv.id
-    configuration: {
-      ingress: {
-        external: true
-        targetPort: 8501
-      }
-      secrets: [
-        {
-          name: 'acr-password'
-          value: acr.listCredentials().passwords[0].value
-        }
-      ]
-      registries: [
-        {
-          server: acr.properties.loginServer
-          username: acr.listCredentials().username
-          passwordSecretRef: 'acr-password'
-        }
-      ]
-    }
-    template: {
-      containers: [
-        {
-          name: 'proharp-dashboard'
-          image: '${acr.properties.loginServer}/pro-harp-dashboard:latest'
-          resources: {
-            cpu: json('0.5')
-            memory: '1.0Gi'
-          }
-          env: [
-            {
-              name: 'DEV_MODE'
-              value: 'false'
-            }
-          ]
-        }
-      ]
-      scale: {
-        minReplicas: 1
-        maxReplicas: 3
-      }
-    }
-  }
-}
-
-output dashboardUrl string = dashboardApp.properties.configuration.ingress.fqdn

@@ -7,6 +7,7 @@ notification dispatch, and audit logging.
 
 import json
 import logging
+import os
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
@@ -16,6 +17,7 @@ from ops.emergency.data_models import (
     ThreatEvent, ThreatType, IncidentRecord, EscalationLevel,
     GeoLocation, EntityRepository
 )
+from ops.emergency.threat_intel import ThreatIntelProvider, MockExternalFeed, AlienVaultOTXProvider
 from ops.emergency.rule_engine import RuleEngine
 from ops.emergency.notifications import NotificationDispatcher
 
@@ -92,6 +94,16 @@ class EventProcessor:
             retry_delay_seconds=self.rule_engine.config.get_notification_settings()["retry_delay_seconds"],
             log_dir=log_dir
         )
+        
+        # Initialize Threat Intel Provider
+        otx_key = os.getenv("ALIENVAULT_OTX_KEY")
+        if otx_key:
+            self.logger = logging.getLogger("EventProcessor")
+            self.logger.info("Initializing AlienVault OTX Provider...")
+            self.threat_intel = AlienVaultOTXProvider(otx_key)
+        else:
+            self.threat_intel = MockExternalFeed()
+            
         self.incident_logger = IncidentLogger(f"{log_dir}/incidents.jsonl")
         
         self.logger = logging.getLogger("EventProcessor")
@@ -121,6 +133,16 @@ class EventProcessor:
         """
         self.logger.info(f"Processing event {event.id}: {event.threat_type.value} "
                         f"(magnitude: {event.magnitude})")
+        
+        # --- Threat Intelligence Enrichment ---
+        try:
+            enrichment = self.threat_intel.enrich_event(event.threat_type.value, event.metadata)
+            if enrichment:
+                self.logger.info(f"Enriched event {event.id} with sources: {enrichment.get('source')}")
+                # Merge enrichment into metadata for rule engine to use
+                event.metadata.update(enrichment)
+        except Exception as e:
+            self.logger.warning(f"Threat enrichment failed for event {event.id}: {e}")
         
         # Evaluate event against entities
         evaluation = self.rule_engine.evaluate_event(

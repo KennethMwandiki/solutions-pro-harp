@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build:
+      context: ../../
+      dockerfile: ops/dashboard/Dockerfile
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    environment:
+      - COSMOS_DB_CONNECTION_STRING=${COSMOS_DB_CONNECTION_STRING}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+      - REDIRECT_URI=${REDIRECT_URI:-http://localhost:8501}
+    volumes:
+      - ../../logs:/app/logs
+    restart: unless-stopped

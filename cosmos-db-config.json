@@ -1,0 +1,7 @@
+{
+  "endpoint": "https://proharp-prod-db.documents.azure.com:443/",
+  "databaseId": "ProHarpEmergency",
+  "containerId": "Entities",
+  "partitionKey": "/tenant_id",
+  "connectionString": "AccountEndpoint=https://proharp-prod-db.documents.azure.com:443/;AccountKey=REPLACE_WITH_KEY;"
+}

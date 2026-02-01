@@ -43,6 +43,7 @@ class EscalationLevel(Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+    CRITICAL = "critical"
 
 
 @dataclass

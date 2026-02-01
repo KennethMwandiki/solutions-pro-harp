@@ -81,6 +81,23 @@ class MockNotificationHandler:
             NotificationResult
         """
         raise NotImplementedError
+    
+    def _log_to_file(self, result: NotificationResult) -> None:
+        """Log notification to JSONL file."""
+        # Determine log filename from notification type
+        log_filename = f"{result.notification_type.value}_notifications.jsonl"
+        log_file = self.log_dir / log_filename
+        
+        with open(log_file, 'a') as f:
+            f.write(json.dumps({
+                "timestamp": result.timestamp.isoformat(),
+                "type": result.notification_type.value,
+                "recipient": result.recipient,
+                "message": result.message,
+                "success": result.success,
+                "error": result.error,
+                "metadata": result.metadata
+            }) + "\n")
 
 
 class MockSMSHandler(MockNotificationHandler):
@@ -108,20 +125,6 @@ class MockSMSHandler(MockNotificationHandler):
         self._log_to_file(result)
         
         return result
-    
-    def _log_to_file(self, result: NotificationResult) -> None:
-        """Log notification to JSONL file."""
-        log_file = self.log_dir / "sms_notifications.jsonl"
-        with open(log_file, 'a') as f:
-            f.write(json.dumps({
-                "timestamp": result.timestamp.isoformat(),
-                "type": result.notification_type.value,
-                "recipient": result.recipient,
-                "message": result.message,
-                "success": result.success,
-                "error": result.error,
-                "metadata": result.metadata
-            }) + "\n")
 
 
 class MockVoiceHandler(MockNotificationHandler):
@@ -147,20 +150,6 @@ class MockVoiceHandler(MockNotificationHandler):
         self._log_to_file(result)
         
         return result
-    
-    def _log_to_file(self, result: NotificationResult) -> None:
-        """Log notification to JSONL file."""
-        log_file = self.log_dir / "voice_notifications.jsonl"
-        with open(log_file, 'a') as f:
-            f.write(json.dumps({
-                "timestamp": result.timestamp.isoformat(),
-                "type": result.notification_type.value,
-                "recipient": result.recipient,
-                "message": result.message,
-                "success": result.success,
-                "error": result.error,
-                "metadata": result.metadata
-            }) + "\n")
 
 
 class MockPushHandler(MockNotificationHandler):
@@ -186,20 +175,6 @@ class MockPushHandler(MockNotificationHandler):
         self._log_to_file(result)
         
         return result
-    
-    def _log_to_file(self, result: NotificationResult) -> None:
-        """Log notification to JSONL file."""
-        log_file = self.log_dir / "push_notifications.jsonl"
-        with open(log_file, 'a') as f:
-            f.write(json.dumps({
-                "timestamp": result.timestamp.isoformat(),
-                "type": result.notification_type.value,
-                "recipient": result.recipient,
-                "message": result.message,
-                "success": result.success,
-                "error": result.error,
-                "metadata": result.metadata
-            }) + "\n")
 
 
 class MockChatOpsHandler(MockNotificationHandler):
@@ -225,20 +200,30 @@ class MockChatOpsHandler(MockNotificationHandler):
         self._log_to_file(result)
         
         return result
+
+
+class MockEmailHandler(MockNotificationHandler):
+    """Mock email notification handler."""
     
-    def _log_to_file(self, result: NotificationResult) -> None:
-        """Log notification to JSONL file."""
-        log_file = self.log_dir / "chatops_notifications.jsonl"
-        with open(log_file, 'a') as f:
-            f.write(json.dumps({
-                "timestamp": result.timestamp.isoformat(),
-                "type": result.notification_type.value,
-                "recipient": result.recipient,
-                "message": result.message,
-                "success": result.success,
-                "error": result.error,
-                "metadata": result.metadata
-            }) + "\n")
+    def send(self, recipient: str, message: str, metadata: Optional[Dict[str, Any]] = None) -> NotificationResult:
+        """
+        Send mock email notification.
+        
+        In production, this would integrate with SMTP or an email service (SendGrid, Mailgun, etc.).
+        """
+        self.logger.info(f"[MOCK EMAIL] To: {recipient} | Message: {message[:100]}...")
+        
+        result = NotificationResult(
+            success=True,
+            notification_type=NotificationType.EMAIL,
+            recipient=recipient,
+            message=message,
+            timestamp=datetime.now(),
+            metadata=metadata
+        )
+        
+        self._log_to_file(result)
+        return result
 
 
 class NotificationDispatcher:
@@ -262,10 +247,80 @@ class NotificationDispatcher:
         self.voice_handler = MockVoiceHandler(log_dir)
         self.push_handler = MockPushHandler(log_dir)
         self.chatops_handler = MockChatOpsHandler(log_dir)
+        self.email_handler = MockEmailHandler(log_dir)
         
         self.logger = logging.getLogger("NotificationDispatcher")
         self.logger.setLevel(logging.INFO)
     
+    def register_handler(self, notification_type: NotificationType, handler: MockNotificationHandler) -> None:
+        """
+        Register a notification handler for a specific type.
+        
+        Args:
+            notification_type: Type of notification
+            handler: Handler implementation
+        """
+        if notification_type == NotificationType.SMS:
+            self.sms_handler = handler
+        elif notification_type == NotificationType.VOICE:
+            self.voice_handler = handler
+        elif notification_type == NotificationType.PUSH:
+            self.push_handler = handler
+        elif notification_type == NotificationType.CHATOPS:
+            self.chatops_handler = handler
+        elif notification_type == NotificationType.EMAIL:
+            self.email_handler = handler
+        
+        self.logger.info(f"Registered {handler.__class__.__name__} for {notification_type.value}")
+    
+    def dispatch_notification(self, notification_type: NotificationType, recipient: str, message: str, metadata: Optional[Dict[str, Any]] = None) -> NotificationResult:
+        """
+        Dispatch a single notification using the registered handler.
+        
+        Args:
+            notification_type: Type of notification
+            recipient: Recipient identifier
+            message: Message content
+            metadata: Additional metadata
+            
+        Returns:
+            Notification result
+        """
+        handler = None
+        if notification_type == NotificationType.SMS:
+            handler = self.sms_handler
+        elif notification_type == NotificationType.VOICE:
+            handler = self.voice_handler
+        elif notification_type == NotificationType.PUSH:
+            handler = self.push_handler
+        elif notification_type == NotificationType.CHATOPS:
+            handler = self.chatops_handler
+        elif notification_type == NotificationType.EMAIL:
+            handler = self.email_handler
+            
+        if not handler:
+            return NotificationResult(
+                success=False,
+                notification_type=notification_type,
+                recipient=recipient,
+                message=message,
+                timestamp=datetime.now(),
+                error=f"No handler registered for {notification_type.value}"
+            )
+            
+        try:
+            return handler.send(recipient, message, metadata)
+        except Exception as e:
+            self.logger.error(f"Notification failed: {e}")
+            return NotificationResult(
+                success=False,
+                notification_type=notification_type,
+                recipient=recipient,
+                message=message,
+                timestamp=datetime.now(),
+                error=str(e)
+            )
+
     def build_message(self, evaluation_result: Dict[str, Any]) -> str:
         """
         Build a notification message from an evaluation result.

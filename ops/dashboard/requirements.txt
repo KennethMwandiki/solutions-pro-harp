@@ -4,3 +4,7 @@ folium
 pandas
 plotly
 watchdog
+msal
+pyjwt
+requests
+azure-cosmos

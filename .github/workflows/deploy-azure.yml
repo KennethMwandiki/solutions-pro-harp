@@ -29,13 +29,15 @@ jobs:
         tenant-id: ${{ env.AZURE_TENANT_ID }}
         subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
+    - name: Get ACR Name
+      run: |
+        ACR_NAME=$(az acr list --resource-group ${{ env.RESOURCE_GROUP }} --query "[0].name" -o tsv)
+        echo "ACR_NAME=$ACR_NAME" >> $GITHUB_ENV
+
     - name: Build and Push to ACR
       run: |
-        # In a real scenario, we'd query the ACR name from Azure or use a known secret
-        # For this template, we assume ACR is created by step 1
-        echo "Building and Pushing images..."
-        # az acr build --registry <acr-name> --image ground-ingest:latest ./ground/ingest
-        # az acr build --registry <acr-name> --image orbital-app:latest ./app
+        echo "Building and Pushing Dashboard image to ${{ env.ACR_NAME }}..."
+        az acr build --registry ${{ env.ACR_NAME }} --image pro-harp-dashboard:latest --file ops/dashboard/Dockerfile .
 
     - name: Deploy Infrastructure (Bicep)
       uses: azure/arm-deploy@v1

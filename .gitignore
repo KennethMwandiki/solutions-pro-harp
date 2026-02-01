@@ -6,6 +6,11 @@ spacedev_cache
 build/
 tmp/
 
+# Environment files
+.env
+.env.*
+.envrc
+
 
 #ignore deployment-yamls, always added by docker-compose
 

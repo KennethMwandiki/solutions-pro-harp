@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+.venv/
+venv/
+ENV/
+
+# Data & Logs
+logs/
+*.jsonl
+*.log
+
+# Environments & Secrets
+.env
+.env.local
+
+# Git
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db

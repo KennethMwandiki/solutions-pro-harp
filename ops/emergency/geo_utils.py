@@ -12,6 +12,7 @@ import math
 import json
 from typing import List, Tuple, Dict, Any, Optional
 from dataclasses import dataclass
+import requests
 
 
 @dataclass
@@ -77,6 +78,38 @@ class GeoUtils:
             dx = radius_km * math.cos(angle) * lon_deg_per_km
             dy = radius_km * math.sin(angle) * lat_deg_per_km
             points.append((center.lon + dx, center.lat + dy))
+
+        # Close the polygon
+        points.append(points[0])
+        return points
+
+    @staticmethod
+    def rectangular_perimeter(center: Coordinate, width_km: float, height_km: float) -> List[Tuple[float, float]]:
+        """
+        Generate a rectangular perimeter around a center point.
+        
+        Args:
+            center: Center coordinate
+            width_km: Width in kilometers (East-West)
+            height_km: Height in kilometers (North-South)
+            
+        Returns:
+            List of (lon, lat) tuples forming a closed rectangular polygon
+        """
+        # Approximate degrees per kilometer at this latitude
+        lat_deg_per_km = 1 / 111.32
+        lon_deg_per_km = 1 / (111.32 * math.cos(math.radians(center.lat)))
+
+        half_w = (width_km / 2) * lon_deg_per_km
+        half_h = (height_km / 2) * lat_deg_per_km
+
+        # Corners: NW, NE, SE, SW
+        points = [
+            (center.lon - half_w, center.lat + half_h), # NW
+            (center.lon + half_w, center.lat + half_h), # NE
+            (center.lon + half_w, center.lat - half_h), # SE
+            (center.lon - half_w, center.lat - half_h), # SW
+        ]
 
         # Close the polygon
         points.append(points[0])
@@ -196,11 +229,66 @@ class GeoUtils:
         }
 
 
+class GeocodingService:
+    """Utilities for forward and reverse geocoding using Nominatim (OSM)."""
+
+    BASE_URL = "https://nominatim.openstreetmap.org"
+    USER_AGENT = "Pro-Harp-Security-Command/1.0"
+
+    @staticmethod
+    def geocode(query: str) -> Optional[Coordinate]:
+        """
+        Convert a location query (e.g. "City, State") to coordinates.
+        """
+        try:
+            params = {
+                "q": query,
+                "format": "json",
+                "limit": 1
+            }
+            headers = {"User-Agent": GeocodingService.USER_AGENT}
+            response = requests.get(f"{GeocodingService.BASE_URL}/search", params=params, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    return Coordinate(lat=float(data[0]["lat"]), lon=float(data[0]["lon"]))
+        except Exception as e:
+            print(f"Geocoding error: {e}")
+        return None
+
+    @staticmethod
+    def reverse_geocode(lat: float, lon: float) -> Optional[Dict[str, str]]:
+        """
+        Convert coordinates to physical address information.
+        """
+        try:
+            params = {
+                "lat": lat,
+                "lon": lon,
+                "format": "json"
+            }
+            headers = {"User-Agent": GeocodingService.USER_AGENT}
+            response = requests.get(f"{GeocodingService.BASE_URL}/reverse", params=params, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                address = data.get("address", {})
+                return {
+                    "city": address.get("city") or address.get("town") or address.get("village") or "",
+                    "state": address.get("state") or "",
+                    "country": address.get("country") or ""
+                }
+        except Exception as e:
+            print(f"Reverse geocoding error: {e}")
+        return None
+
+
 class PerimeterGenerator:
     """High-level perimeter generation utilities."""
 
     @staticmethod
-    def from_single_point(lat: float, lon: float, radius_km: float) -> Dict[str, Any]:
+    def from_single_point(lat: float, lon: float, radius_km: float, properties: Optional[Dict] = None) -> Dict[str, Any]:
         """
         Generate a radial perimeter from a single point.
         
@@ -208,17 +296,50 @@ class PerimeterGenerator:
             lat: Latitude
             lon: Longitude
             radius_km: Radius in kilometers
+            properties: Optional extra properties
             
         Returns:
             GeoJSON Polygon feature
         """
         center = Coordinate(lat, lon)
         coords = GeoUtils.radial_perimeter(center, radius_km)
-        return GeoUtils.to_geojson_polygon(coords, {
+        base_props = {
             "type": "radial_buffer",
             "center": {"lat": lat, "lon": lon},
             "radius_km": radius_km
-        })
+        }
+        if properties:
+            base_props.update(properties)
+            
+        return GeoUtils.to_geojson_polygon(coords, base_props)
+
+    @staticmethod
+    def from_rectangle(lat: float, lon: float, width_km: float, height_km: float, properties: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Generate a rectangular perimeter from center and dimensions.
+        
+        Args:
+            lat: Center latitude
+            lon: Center longitude
+            width_km: Width in km
+            height_km: Height in km
+            properties: Optional extra properties
+            
+        Returns:
+            GeoJSON Polygon feature
+        """
+        center = Coordinate(lat, lon)
+        coords = GeoUtils.rectangular_perimeter(center, width_km, height_km)
+        base_props = {
+            "type": "rectangular_area",
+            "center": {"lat": lat, "lon": lon},
+            "width_km": width_km,
+            "height_km": height_km
+        }
+        if properties:
+            base_props.update(properties)
+            
+        return GeoUtils.to_geojson_polygon(coords, base_props)
 
     @staticmethod
     def from_multiple_points(coords: List[Tuple[float, float]]) -> Dict[str, Any]:

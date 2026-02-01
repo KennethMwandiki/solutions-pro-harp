@@ -10,170 +10,185 @@ current_dir = Path(__file__).parent
 project_root = current_dir.parent.parent.parent
 sys.path.append(str(project_root))
 
-st.set_page_config(page_title="Entity Management", page_icon="👥", layout="wide")
+from ops.dashboard.auth import require_auth, get_current_user
 
-st.title("👥 Entity Management")
+@require_auth(role="Operator")
+def main():
+    st.set_page_config(page_title="Entity Management", page_icon="👥", layout="wide")
 
-# Data Directory
-DATA_DIR = project_root / "ops/emergency/data"
-OBJECTS_FILE = DATA_DIR / "objects.geojson"
-PERSONNEL_FILE = DATA_DIR / "personnel.geojson"
-AREAS_FILE = DATA_DIR / "areas.geojson"
-TENANTS = ["tenant-city-one", "tenant-b", "default_tenant"]
+    st.title("👥 Entity Management")
 
-# --- Context ---
-with st.sidebar:
-    st.header("🏢 Context")
-    selected_tenant = st.selectbox("Tenant ID", options=TENANTS, index=0)
-    st.info(f"Managing entities for: **{selected_tenant}**")
+    # Data Directory
+    DATA_DIR = project_root / "ops/emergency/data"
+    OBJECTS_FILE = DATA_DIR / "objects.geojson"
+    PERSONNEL_FILE = DATA_DIR / "personnel.geojson"
+    AREAS_FILE = DATA_DIR / "areas.geojson"
+    TENANTS = ["tenant-city-one", "tenant-b", "default_tenant"]
 
-def load_geojson(filepath):
-    if not filepath.exists():
-        return {"type": "FeatureCollection", "features": []}
-    with open(filepath, "r") as f:
-        return json.load(f)
-
-def save_geojson(filepath, data):
-    with open(filepath, "w") as f:
-        json.dump(data, f, indent=2)
-
-def features_to_df(features, props_to_cols, current_tenant):
-    rows = []
-    for f in features:
-        props = f.get("properties", {})
-        # Filter by tenant
-        if props.get("tenant_id", "default_tenant") != current_tenant:
-            continue
-            
-        geom = f.get("geometry", {})
-        coords = geom.get("coordinates", [])
-        
-        row = {k: props.get(k) for k in props_to_cols}
-        row["id"] = props.get("id")
-        
-        # Handle coordinates display
-        if geom.get("type") == "Point":
-            row["lon"] = coords[0]
-            row["lat"] = coords[1]
-        elif geom.get("type") == "Polygon":
-            # Just show centroid or first point for simplicity in table
-            if coords:
-                row["lon"] = coords[0][0][0]
-                row["lat"] = coords[0][0][1]
-        
-        rows.append(row)
-    return pd.DataFrame(rows)
-
-tab_obj, tab_pers, tab_area = st.tabs(["🏗️ Objects", "🧑‍🚒 Personnel", "🏘️ Areas"])
-
-# --- OBJECTS ---
-with tab_obj:
-    st.subheader("Critical Infrastructure Objects")
-    obj_data = load_geojson(OBJECTS_FILE)
+    # --- User Info & Context ---
+    user = get_current_user()
     
-    if obj_data["features"]:
-        df_obj = features_to_df(
-            obj_data["features"], 
-            ["name", "criticality", "vulnerability_score", "asset_value"],
-            selected_tenant
-        )
-        st.dataframe(df_obj, use_container_width=True)
-    else:
-        st.info("No objects defined.")
-    
-    with st.expander("➕ Add New Object"):
-        with st.form("new_object"):
-            new_name = st.text_input("Name")
-            col_a, col_b = st.columns(2)
-            with col_a:
-                new_lat = st.number_input("Latitude", value=40.7128, format="%.4f")
-                new_crit = st.selectbox("Criticality", ["LOW", "MEDIUM", "HIGH", "CRITICAL"], key="obj_crit")
-            with col_b:
-                new_lon = st.number_input("Longitude", value=-74.0060, format="%.4f")
-                new_vuln = st.slider("Vulnerability Score", 0.0, 1.0, 0.5)
+    with st.sidebar:
+        st.header("👤 Operator")
+        if user:
+            st.write(f"**{user.get('displayName', 'Unknown')}**")
+            st.caption(f"Role: Operator")
+        st.divider()
+        
+        st.header("🏢 Context")
+        selected_tenant = st.selectbox("Tenant ID", options=TENANTS, index=0)
+        st.info(f"Managing entities for: **{selected_tenant}**")
+
+    def load_geojson(filepath):
+        if not filepath.exists():
+            return {"type": "FeatureCollection", "features": []}
+        with open(filepath, "r") as f:
+            return json.load(f)
+
+    def save_geojson(filepath, data):
+        with open(filepath, "w") as f:
+            json.dump(data, f, indent=2)
+
+    def features_to_df(features, props_to_cols, current_tenant):
+        rows = []
+        for f in features:
+            props = f.get("properties", {})
+            # Filter by tenant
+            if props.get("tenant_id", "default_tenant") != current_tenant:
+                continue
+                
+            geom = f.get("geometry", {})
+            coords = geom.get("coordinates", [])
             
-            submitted = st.form_submit_button("Create Object")
-            if submitted:
-                new_id = f"obj-{uuid.uuid4().hex[:8]}"
-                new_feature = {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [new_lon, new_lat]
-                    },
-                    "properties": {
-                        "entity_type": "object",
-                        "id": new_id,
-                        "name": new_name,
-                        "criticality": new_crit,
-                        "vulnerability_score": new_vuln,
-                        "tenant_id": selected_tenant
+            row = {k: props.get(k) for k in props_to_cols}
+            row["id"] = props.get("id")
+            
+            # Handle coordinates display
+            if geom.get("type") == "Point":
+                row["lon"] = coords[0]
+                row["lat"] = coords[1]
+            elif geom.get("type") == "Polygon":
+                # Just show centroid or first point for simplicity in table
+                if coords:
+                    row["lon"] = coords[0][0][0]
+                    row["lat"] = coords[0][0][1]
+            
+            rows.append(row)
+        return pd.DataFrame(rows)
+
+    tab_obj, tab_pers, tab_area = st.tabs(["🏗️ Objects", "🧑‍🚒 Personnel", "🏘️ Areas"])
+
+    # --- OBJECTS ---
+    with tab_obj:
+        st.subheader("Critical Infrastructure Objects")
+        obj_data = load_geojson(OBJECTS_FILE)
+        
+        if obj_data["features"]:
+            df_obj = features_to_df(
+                obj_data["features"], 
+                ["name", "criticality", "vulnerability_score", "asset_value"],
+                selected_tenant
+            )
+            st.dataframe(df_obj, use_container_width=True)
+        else:
+            st.info("No objects defined.")
+        
+        with st.expander("➕ Add New Object"):
+            with st.form("new_object"):
+                new_name = st.text_input("Name")
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    new_lat = st.number_input("Latitude", value=40.7128, format="%.4f")
+                    new_crit = st.selectbox("Criticality", ["LOW", "MEDIUM", "HIGH", "CRITICAL"], key="obj_crit")
+                with col_b:
+                    new_lon = st.number_input("Longitude", value=-74.0060, format="%.4f")
+                    new_vuln = st.slider("Vulnerability Score", 0.0, 1.0, 0.5)
+                
+                submitted = st.form_submit_button("Create Object")
+                if submitted:
+                    new_id = f"obj-{uuid.uuid4().hex[:8]}"
+                    new_feature = {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [new_lon, new_lat]
+                        },
+                        "properties": {
+                            "entity_type": "object",
+                            "id": new_id,
+                            "name": new_name,
+                            "criticality": new_crit,
+                            "vulnerability_score": new_vuln,
+                            "tenant_id": selected_tenant
+                        }
                     }
-                }
-                obj_data["features"].append(new_feature)
-                save_geojson(OBJECTS_FILE, obj_data)
-                st.success(f"Added {new_name}")
-                st.rerun()
+                    obj_data["features"].append(new_feature)
+                    save_geojson(OBJECTS_FILE, obj_data)
+                    st.success(f"Added {new_name}")
+                    st.rerun()
 
-# --- PERSONNEL ---
-with tab_pers:
-    st.subheader("Emergency Personnel")
-    pers_data = load_geojson(PERSONNEL_FILE)
-    
-    if pers_data["features"]:
-        df_pers = features_to_df(
-            pers_data["features"],
-            ["name", "role", "criticality", "on_duty", "contact_phone"],
-            selected_tenant
-        )
-        st.dataframe(df_pers, use_container_width=True)
-    
-    with st.expander("➕ Add Personnel"):
-        with st.form("new_person"):
-            p_name = st.text_input("Name")
-            p_role = st.text_input("Role")
-            col_p1, col_p2 = st.columns(2)
-            with col_p1:
-                p_lat = st.number_input("Latitude", value=40.7128, format="%.4f", key="p_lat")
-                p_on_duty = st.checkbox("On Duty", value=True)
-            with col_p2:
-                p_lon = st.number_input("Longitude", value=-74.0060, format="%.4f", key="p_lon")
-                p_crit = st.selectbox("Criticality", ["LOW", "MEDIUM", "HIGH", "CRITICAL"], key="p_crit")
-            
-            p_phone = st.text_input("Phone")
-            
-            p_submitted = st.form_submit_button("Add Personnel")
-            if p_submitted:
-                new_id = f"pers-{uuid.uuid4().hex[:8]}"
-                new_feature = {
-                    "type": "Feature",
-                    "geometry": {"type": "Point", "coordinates": [p_lon, p_lat]},
-                    "properties": {
-                        "entity_type": "personnel",
-                        "id": new_id,
-                        "name": p_name,
-                        "role": p_role,
-                        "criticality": p_crit,
-                        "on_duty": p_on_duty,
-                        "contact_phone": p_phone,
-                        "tenant_id": selected_tenant
+    # --- PERSONNEL ---
+    with tab_pers:
+        st.subheader("Emergency Personnel")
+        pers_data = load_geojson(PERSONNEL_FILE)
+        
+        if pers_data["features"]:
+            df_pers = features_to_df(
+                pers_data["features"],
+                ["name", "role", "criticality", "on_duty", "contact_phone"],
+                selected_tenant
+            )
+            st.dataframe(df_pers, use_container_width=True)
+        
+        with st.expander("➕ Add Personnel"):
+            with st.form("new_person"):
+                p_name = st.text_input("Name")
+                p_role = st.text_input("Role")
+                col_p1, col_p2 = st.columns(2)
+                with col_p1:
+                    p_lat = st.number_input("Latitude", value=40.7128, format="%.4f", key="p_lat")
+                    p_on_duty = st.checkbox("On Duty", value=True)
+                with col_p2:
+                    p_lon = st.number_input("Longitude", value=-74.0060, format="%.4f", key="p_lon")
+                    p_crit = st.selectbox("Criticality", ["LOW", "MEDIUM", "HIGH", "CRITICAL"], key="p_crit")
+                
+                p_phone = st.text_input("Phone")
+                
+                p_submitted = st.form_submit_button("Add Personnel")
+                if p_submitted:
+                    new_id = f"pers-{uuid.uuid4().hex[:8]}"
+                    new_feature = {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": [p_lon, p_lat]},
+                        "properties": {
+                            "entity_type": "personnel",
+                            "id": new_id,
+                            "name": p_name,
+                            "role": p_role,
+                            "criticality": p_crit,
+                            "on_duty": p_on_duty,
+                            "contact_phone": p_phone,
+                            "tenant_id": selected_tenant
+                        }
                     }
-                }
-                pers_data["features"].append(new_feature)
-                save_geojson(PERSONNEL_FILE, pers_data)
-                st.success(f"Added {p_name}")
-                st.rerun()
+                    pers_data["features"].append(new_feature)
+                    save_geojson(PERSONNEL_FILE, pers_data)
+                    st.success(f"Added {p_name}")
+                    st.rerun()
 
-# --- AREAS ---
-with tab_area:
-    st.subheader("Areas of Interest")
-    st.info("To edit areas, use the Perimeter Map tool to draw polygons interactively.")
-    area_data = load_geojson(AREAS_FILE)
-    
-    if area_data["features"]:
-        df_area = features_to_df(
-            area_data["features"],
-            ["name", "strategic_importance", "population_density"],
-            selected_tenant
-        )
-        st.dataframe(df_area, use_container_width=True)
+    # --- AREAS ---
+    with tab_area:
+        st.subheader("Areas of Interest")
+        st.info("To edit areas, use the Perimeter Map tool to draw polygons interactively.")
+        area_data = load_geojson(AREAS_FILE)
+        
+        if area_data["features"]:
+            df_area = features_to_df(
+                area_data["features"],
+                ["name", "strategic_importance", "population_density"],
+                selected_tenant
+            )
+            st.dataframe(df_area, use_container_width=True)
+
+if __name__ == "__main__":
+    main()
